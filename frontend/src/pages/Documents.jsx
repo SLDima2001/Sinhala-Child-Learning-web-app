@@ -34,7 +34,7 @@ const Documents = () => {
                 </span>
                 {doc.link && (
                   <a 
-                    href={`http://localhost:5000${doc.link}`} 
+                    href={`${(import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace('/api', '')}${doc.link}`} 
                     target="_blank" 
                     rel="noreferrer" 
                     className="btn-primary" 
