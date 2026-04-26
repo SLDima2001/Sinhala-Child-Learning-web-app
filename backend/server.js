@@ -6,30 +6,8 @@ require('dotenv').config();
 const app = express();
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-// Allow all vercel.app subdomains + localhost for local dev
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowed = [
-      /vercel\.app$/,           // any *.vercel.app subdomain
-      /^http:\/\/localhost/,    // any localhost port
-    ];
-    // allow requests with no origin (like curl, mobile apps)
-    if (!origin) return callback(null, true);
-    const isAllowed = allowed.some((pattern) => pattern.test(origin));
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin}`));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-};
-
-app.use(cors(corsOptions));
-// Handle preflight OPTIONS requests for all routes
-app.options('*', cors(corsOptions));
+// Simple wildcard - Vercel also injects headers via vercel.json for double safety
+app.use(cors({ origin: '*' }));
 
 app.use(express.json());
 
@@ -37,13 +15,13 @@ app.use(express.json());
 app.use('/api', require('./routes/apiRoutes'));
 
 // Health check
-app.get('/', (req, res) => res.json({ status: 'Backend is running ✅' }));
+app.get('/', (req, res) => res.json({ status: 'Backend running ✅', timestamp: new Date() }));
 
 // ─── MongoDB ─────────────────────────────────────────────────────────────────
 let cachedConnection = null;
 
 const connectDB = async () => {
-  if (cachedConnection) return cachedConnection;
+  if (cachedConnection && mongoose.connection.readyState === 1) return cachedConnection;
   const conn = await mongoose.connect(
     process.env.MONGODB_URI || 'mongodb://localhost:27017/project-website'
   );
@@ -54,10 +32,10 @@ const connectDB = async () => {
 
 connectDB().catch(err => console.error('MongoDB connection error:', err));
 
-// ─── Start locally ───────────────────────────────────────────────────────────
+// ─── Start locally (not on Vercel) ───────────────────────────────────────────
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 // ─── Export for Vercel serverless ────────────────────────────────────────────
