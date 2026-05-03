@@ -8,6 +8,7 @@ const upload = multer({ storage });
 const Milestone = require('../models/Milestone');
 const Document = require('../models/Document');
 const TeamMember = require('../models/TeamMember');
+const ProjectOverview = require('../models/ProjectOverview');
 
 // Get all milestones
 router.get('/milestones', async (req, res) => {
@@ -182,6 +183,41 @@ router.delete('/team/:id', requireAuth, async (req, res) => {
   try {
     await TeamMember.findByIdAndDelete(req.params.id);
     res.json({ message: 'Team Member deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// --- PROJECT OVERVIEW ---
+// Public: get overview
+router.get('/project-overview', async (req, res) => {
+  try {
+    let overview = await ProjectOverview.findOne();
+    if (!overview) {
+      overview = {};
+    }
+    res.json(overview);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Protected: upsert overview
+router.put('/project-overview', requireAuth, async (req, res) => {
+  try {
+    const { title, description, highlights, videoUrl } = req.body;
+    let highlightsArray = [];
+    if (highlights) {
+      highlightsArray = Array.isArray(highlights)
+        ? highlights
+        : highlights.split(',').map(h => h.trim()).filter(Boolean);
+    }
+    const overview = await ProjectOverview.findOneAndUpdate(
+      {},
+      { title, description, highlights: highlightsArray, videoUrl },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    res.json(overview);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
