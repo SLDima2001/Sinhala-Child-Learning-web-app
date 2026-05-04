@@ -145,7 +145,7 @@ const Home = () => {
               )}
             </div>
 
-            {/* ── Milestones Card ── */}
+            {/* ── Milestones Card ──
             <div className="peek-card glass-panel" onClick={() => navigate('/milestones')} role="button" tabIndex={0}>
               <div className="peek-card-header">
                 <span className="peek-icon">🏁</span>
@@ -174,7 +174,7 @@ const Home = () => {
                   )}
                 </>
               )}
-            </div>
+            </div> */}
 
             {/* ── Documents Card ── */}
             <div className="peek-card glass-panel" onClick={() => navigate('/documents')} role="button" tabIndex={0}>
