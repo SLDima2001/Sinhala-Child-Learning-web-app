@@ -208,7 +208,7 @@ const Home = () => {
       </section>
 
       {/* ── ALL DOCUMENTS STRIP ───────────────────────────────────────────── */}
-      {documents.length > 0 && (
+      {/* {documents.length > 0 && (
         <section className="home-section animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <div className="container">
             <h2 className="section-heading">📂 Project Documents</h2>
@@ -244,7 +244,7 @@ const Home = () => {
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
     </div>
   );
