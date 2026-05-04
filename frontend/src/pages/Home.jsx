@@ -24,7 +24,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [overview, setOverview]     = useState(null);
   const [team, setTeam]             = useState([]);
-  const [milestones, setMilestones] = useState([]);
+ // const [milestones, setMilestones] = useState([]);
   const [documents, setDocuments]   = useState([]);
   const [loading, setLoading]       = useState(true);
 
@@ -33,13 +33,13 @@ const Home = () => {
       const [ovResult, teamResult, milResult, docResult] = await Promise.allSettled([
         api.get('/project-overview'),
         api.get('/team'),
-        api.get('/milestones'),
+       // api.get('/milestones'),
         api.get('/documents'),
       ]);
 
       if (ovResult.status === 'fulfilled')   setOverview(ovResult.value.data);
       if (teamResult.status === 'fulfilled') setTeam(teamResult.value.data);
-      if (milResult.status === 'fulfilled')  setMilestones(milResult.value.data);
+      //if (milResult.status === 'fulfilled')  setMilestones(milResult.value.data);
       if (docResult.status === 'fulfilled')  setDocuments(docResult.value.data);
 
       // Always stop the loading skeleton regardless of individual failures
