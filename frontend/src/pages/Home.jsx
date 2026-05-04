@@ -96,14 +96,14 @@ const Home = () => {
                   <span className="text-gradient">{ov.title}</span>
                 </h1>
                 
-                {sessionStorage.getItem('adminToken') && (
+                {/* {sessionStorage.getItem('adminToken') && (
                   <button 
                     className="admin-edit-shortcut"
                     onClick={() => navigate('/hidden-admin')}
                   >
                     ✏️ Edit Layer
                   </button>
-                )}
+                )} */}
                 
                 <div className="hero-desc-wrapper">
                   <Description text={ov.description} />
