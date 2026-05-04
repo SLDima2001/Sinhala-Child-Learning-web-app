@@ -38,8 +38,10 @@ const HiddenAdmin = () => {
   // Project Overview State
   const [ovTitle, setOvTitle] = useState('');
   const [ovDesc, setOvDesc] = useState('');
+  const [ovDesc2, setOvDesc2] = useState('');
   const [ovHighlights, setOvHighlights] = useState('');
   const [ovVideo, setOvVideo] = useState('');
+  const [editingOvId, setEditingOvId] = useState(null);
 
   const fetchAllData = async () => {
     try {
@@ -152,18 +154,40 @@ const HiddenAdmin = () => {
   const handleOverviewSave = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/project-overview', {
+      const payload = {
         title: ovTitle,
         description: ovDesc,
+        description2: ovDesc2,
         highlights: ovHighlights,
         videoUrl: ovVideo
-      }, config());
-      setMessage('New overview layer added successfully!');
-      setOvTitle(''); setOvDesc(''); setOvHighlights(''); setOvVideo('');
+      };
+
+      if (editingOvId) {
+        await api.put(`/project-overview/${editingOvId}`, payload, config());
+        setMessage('Overview layer updated successfully!');
+      } else {
+        await api.post('/project-overview', payload, config());
+        setMessage('New overview layer added successfully!');
+      }
+
+      setOvTitle(''); setOvDesc(''); setOvDesc2(''); setOvHighlights(''); setOvVideo('');
+      setEditingOvId(null);
       fetchAllData();
     } catch (err) {
-      setMessage('Failed to add project overview');
+      setMessage(`Failed to ${editingOvId ? 'update' : 'add'} project overview`);
     }
+  };
+
+  const startEditingOverview = (ov) => {
+    setEditingOvId(ov._id);
+    setOvTitle(ov.title);
+    setOvDesc(ov.description);
+    setOvDesc2(ov.description2 || '');
+    setOvHighlights((ov.highlights || []).join(', '));
+    setOvVideo(ov.videoUrl || '');
+    setMessage('');
+    // Scroll to form (optional, but helpful)
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (category, id) => {
@@ -206,15 +230,14 @@ const HiddenAdmin = () => {
           <button className={`tab-btn ${activeTab === 'milestones' ? 'active' : ''}`} onClick={() => setActiveTab('milestones')}>🏁 Milestones</button>
           <button className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>👥 Team Members</button>
         </div>
-
         {/* PROJECT OVERVIEW TAB — two-column layout */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-2">
             {/* LEFT SIDE: CREATION FORM */}
             <div className="glass-panel" style={{ padding: '2rem' }}>
-              <h3 style={{ marginBottom: '0.5rem' }}>Add Overview Layer</h3>
+              <h3 style={{ marginBottom: '0.5rem' }}>{editingOvId ? 'Edit Layer' : 'Add Overview Layer'}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Create a new section for the Home page.
+                {editingOvId ? 'Update this section content.' : 'Create a new section for the Home page.'}
               </p>
               <form onSubmit={handleOverviewSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
@@ -229,14 +252,25 @@ const HiddenAdmin = () => {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Layer Description</label>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Layer Description 1</label>
                   <textarea
                     placeholder="Describe this section in 2–4 sentences..."
                     value={ovDesc}
                     onChange={e => setOvDesc(e.target.value)}
                     required
                     className="admin-input"
-                    rows={5}
+                    rows={4}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Layer Description 2 (Optional)</label>
+                  <textarea
+                    placeholder="Additional description content..."
+                    value={ovDesc2}
+                    onChange={e => setOvDesc2(e.target.value)}
+                    className="admin-input"
+                    rows={4}
                     style={{ resize: 'vertical' }}
                   />
                 </div>
@@ -264,9 +298,23 @@ const HiddenAdmin = () => {
                     className="admin-input"
                   />
                 </div>
-                <button className="btn-primary" type="submit" style={{ alignSelf: 'flex-start' }}>
-                  ➕ Add Layer
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button className="btn-primary" type="submit">
+                    {editingOvId ? '💾 Update Layer' : '➕ Add Layer'}
+                  </button>
+                  {editingOvId && (
+                    <button
+                      type="button"
+                      className="btn-outline"
+                      onClick={() => {
+                        setEditingOvId(null);
+                        setOvTitle(''); setOvDesc(''); setOvDesc2(''); setOvHighlights(''); setOvVideo('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </form>
             </div>
 
@@ -281,11 +329,14 @@ const HiddenAdmin = () => {
                     <div key={ov._id || idx} className="admin-list-item">
                       <div style={{ flex: 1, marginRight: '1rem' }}>
                         <h4 style={{ margin: 0, fontSize: '1rem' }}>{ov.title}</h4>
-                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '250px' }}>
                           {ov.description}
                         </p>
                       </div>
-                      <button onClick={() => handleDelete('project-overview', ov._id)} className="btn-delete">Delete</button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => startEditingOverview(ov)} className="btn-primary" style={{ padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>Edit</button>
+                        <button onClick={() => handleDelete('project-overview', ov._id)} className="btn-delete">Delete</button>
+                      </div>
                     </div>
                   ))
                 )}

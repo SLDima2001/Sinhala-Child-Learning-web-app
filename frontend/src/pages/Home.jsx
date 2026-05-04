@@ -18,6 +18,28 @@ const typeIcon = (type) => {
   return map[type] || '📄';
 };
 
+/* ─── Expandable Description Component ───────────────────────────────────── */
+const Description = ({ text }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text && text.length > 300;
+  
+  if (!text) return null;
+
+  if (!isLong) return <p className="hero-desc">{text}</p>;
+
+  return (
+    <p className="hero-desc">
+      {expanded ? text : `${text.substring(0, 280)}...`}
+      <button 
+        onClick={() => setExpanded(!expanded)} 
+        className="read-more-btn"
+      >
+        {expanded ? ' Show Less' : ' Read More'}
+      </button>
+    </p>
+  );
+};
+
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 const Home = () => {
@@ -65,36 +87,56 @@ const Home = () => {
           </div>
         </section>
       ) : hasOverview ? (
-        overviews.map((ov, idx) => (
-          <section key={ov._id || idx} className="home-hero animate-fade-in" style={{ animationDelay: `${idx * 0.1}s`, paddingBottom: '4rem' }}>
-            <div className="container">
-              <h1 className="hero-title">
-                <span className="text-gradient">{ov.title}</span>
-              </h1>
-              <p className="hero-desc">{ov.description}</p>
-
-              {ov.highlights && ov.highlights.length > 0 && (
-                <div className="highlights-row">
-                  {ov.highlights.map((h, i) => (
-                    <span key={i} className="highlight-chip">{h}</span>
-                  ))}
+        overviews.map((ov, idx) => {
+          const isLong = ov.description && ov.description.length > 250;
+          return (
+            <section key={ov._id || idx} className="home-hero animate-fade-in" style={{ animationDelay: `${idx * 0.1}s`, paddingBottom: '3rem' }}>
+              <div className="container">
+                <h1 className="hero-title">
+                  <span className="text-gradient">{ov.title}</span>
+                </h1>
+                
+                {sessionStorage.getItem('adminToken') && (
+                  <button 
+                    className="admin-edit-shortcut"
+                    onClick={() => navigate('/hidden-admin')}
+                  >
+                    ✏️ Edit Layer
+                  </button>
+                )}
+                
+                <div className="hero-desc-wrapper">
+                  <Description text={ov.description} />
+                  {ov.description2 && (
+                    <div style={{ marginTop: '2rem' }}>
+                      <Description text={ov.description2} />
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {ov.videoUrl && (
-                <div className="video-wrapper">
-                  <iframe
-                    src={ov.videoUrl}
-                    title={`Project Demo Video ${idx + 1}`}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-        ))
+                {ov.highlights && ov.highlights.length > 0 && (
+                  <div className="highlights-row">
+                    {ov.highlights.map((h, i) => (
+                      <span key={i} className="highlight-chip">{h}</span>
+                    ))}
+                  </div>
+                )}
+
+                {ov.videoUrl && (
+                  <div className="video-wrapper">
+                    <iframe
+                      src={ov.videoUrl}
+                      title={`Project Demo Video ${idx + 1}`}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+              </div>
+            </section>
+          );
+        })
       ) : (
         <section className="home-hero animate-fade-in">
           <div className="container">
@@ -105,10 +147,10 @@ const Home = () => {
               A gamified, AI-powered interactive learning platform designed to help children
               learn the Sinhala language intuitively.
             </p>
-            <div className="hero-cta">
+            {/* <div className="hero-cta">
               <button className="btn-primary" onClick={() => navigate('/milestones')}>View Milestones</button>
               <button className="btn-outline" onClick={() => navigate('/about')}>Meet the Team</button>
-            </div>
+            </div> */}
           </div>
         </section>
       )}

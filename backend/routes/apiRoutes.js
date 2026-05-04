@@ -202,7 +202,7 @@ router.get('/project-overview', async (req, res) => {
 // Protected: add a new overview layer
 router.post('/project-overview', requireAuth, async (req, res) => {
   try {
-    const { title, description, highlights, videoUrl } = req.body;
+    const { title, description, description2, highlights, videoUrl } = req.body;
     let highlightsArray = [];
     if (highlights) {
       highlightsArray = Array.isArray(highlights)
@@ -212,6 +212,7 @@ router.post('/project-overview', requireAuth, async (req, res) => {
     const newOverview = new ProjectOverview({
       title,
       description,
+      description2,
       highlights: highlightsArray,
       videoUrl
     });
@@ -225,7 +226,7 @@ router.post('/project-overview', requireAuth, async (req, res) => {
 // Protected: update a specific overview layer
 router.put('/project-overview/:id', requireAuth, async (req, res) => {
   try {
-    const { title, description, highlights, videoUrl } = req.body;
+    const { title, description, description2, highlights, videoUrl } = req.body;
     let highlightsArray = [];
     if (highlights) {
       highlightsArray = Array.isArray(highlights)
@@ -234,7 +235,7 @@ router.put('/project-overview/:id', requireAuth, async (req, res) => {
     }
     const updated = await ProjectOverview.findByIdAndUpdate(
       req.params.id,
-      { title, description, highlights: highlightsArray, videoUrl },
+      { title, description, description2, highlights: highlightsArray, videoUrl },
       { new: true }
     );
     res.json(updated);
