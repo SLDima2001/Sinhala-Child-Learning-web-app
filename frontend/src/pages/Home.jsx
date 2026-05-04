@@ -22,7 +22,7 @@ const typeIcon = (type) => {
 
 const Home = () => {
   const navigate = useNavigate();
-  const [overview, setOverview]     = useState(null);
+  const [overviews, setOverviews]   = useState([]);
   const [team, setTeam]             = useState([]);
   const [milestones, setMilestones] = useState([]);
   const [documents, setDocuments]   = useState([]);
@@ -37,7 +37,7 @@ const Home = () => {
         api.get('/documents'),
       ]);
 
-      if (ovResult.status === 'fulfilled')   setOverview(ovResult.value.data);
+      if (ovResult.status === 'fulfilled')   setOverviews(ovResult.value.data);
       if (teamResult.status === 'fulfilled') setTeam(teamResult.value.data);
       if (milResult.status === 'fulfilled')  setMilestones(milResult.value.data);
       if (docResult.status === 'fulfilled')  setDocuments(docResult.value.data);
@@ -48,64 +48,70 @@ const Home = () => {
     fetchAll();
   }, []);
 
-  const hasOverview = overview && (overview.title || overview.description);
+  const hasOverview = overviews && overviews.length > 0;
 
   return (
     <div className="home-page">
 
-      {/* ── HERO / PROJECT OVERVIEW ────────────────────────────────────────── */}
-      <section className="home-hero animate-fade-in">
-        <div className="container">
-          {loading ? (
+      {/* ── HERO / PROJECT OVERVIEW LAYERS ────────────────────────────────── */}
+      {loading ? (
+        <section className="home-hero animate-fade-in">
+          <div className="container">
             <div className="hero-placeholder">
               <div className="skeleton skeleton-title" />
               <div className="skeleton skeleton-body" />
               <div className="skeleton skeleton-body short" />
             </div>
-          ) : hasOverview ? (
-            <>
+          </div>
+        </section>
+      ) : hasOverview ? (
+        overviews.map((ov, idx) => (
+          <section key={ov._id || idx} className="home-hero animate-fade-in" style={{ animationDelay: `${idx * 0.1}s`, paddingBottom: '4rem' }}>
+            <div className="container">
               <h1 className="hero-title">
-                <span className="text-gradient">{overview.title}</span>
+                <span className="text-gradient">{ov.title}</span>
               </h1>
-              <p className="hero-desc">{overview.description}</p>
+              <p className="hero-desc">{ov.description}</p>
 
-              {overview.highlights && overview.highlights.length > 0 && (
+              {ov.highlights && ov.highlights.length > 0 && (
                 <div className="highlights-row">
-                  {overview.highlights.map((h, i) => (
+                  {ov.highlights.map((h, i) => (
                     <span key={i} className="highlight-chip">{h}</span>
                   ))}
                 </div>
               )}
 
-              {overview.videoUrl && (
+              {ov.videoUrl && (
                 <div className="video-wrapper">
                   <iframe
-                    src={overview.videoUrl}
-                    title="Project Demo Video"
+                    src={ov.videoUrl}
+                    title={`Project Demo Video ${idx + 1}`}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
                 </div>
               )}
-            </>
-          ) : (
-            <>
-              <h1 className="hero-title">
-                Discover <span className="text-gradient">EduSinhala</span>
-              </h1>
-              <p className="hero-desc">
-                A gamified, AI-powered interactive learning platform designed to help children
-                learn the Sinhala language intuitively.
-              </p>
-              <div className="hero-cta">
-                <button className="btn-primary" onClick={() => navigate('/milestones')}>View Milestones</button>
-                <button className="btn-outline" onClick={() => navigate('/about')}>Meet the Team</button>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+            </div>
+          </section>
+        ))
+      ) : (
+        <section className="home-hero animate-fade-in">
+          <div className="container">
+            <h1 className="hero-title">
+              Discover <span className="text-gradient">EduSinhala</span>
+            </h1>
+            <p className="hero-desc">
+              A gamified, AI-powered interactive learning platform designed to help children
+              learn the Sinhala language intuitively.
+            </p>
+            <div className="hero-cta">
+              <button className="btn-primary" onClick={() => navigate('/milestones')}>View Milestones</button>
+              <button className="btn-outline" onClick={() => navigate('/about')}>Meet the Team</button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── QUICK PEEK CARDS ──────────────────────────────────────────────── */}
       <section className="home-section animate-fade-in" style={{ animationDelay: '0.15s' }}>

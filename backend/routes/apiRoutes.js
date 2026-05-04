@@ -189,21 +189,18 @@ router.delete('/team/:id', requireAuth, async (req, res) => {
 });
 
 // --- PROJECT OVERVIEW ---
-// Public: get overview
+// Public: get all overview layers
 router.get('/project-overview', async (req, res) => {
   try {
-    let overview = await ProjectOverview.findOne();
-    if (!overview) {
-      overview = {};
-    }
-    res.json(overview);
+    const overviews = await ProjectOverview.find().sort({ createdAt: 1 });
+    res.json(overviews);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// Protected: upsert overview
-router.put('/project-overview', requireAuth, async (req, res) => {
+// Protected: add a new overview layer
+router.post('/project-overview', requireAuth, async (req, res) => {
   try {
     const { title, description, highlights, videoUrl } = req.body;
     let highlightsArray = [];
@@ -212,12 +209,45 @@ router.put('/project-overview', requireAuth, async (req, res) => {
         ? highlights
         : highlights.split(',').map(h => h.trim()).filter(Boolean);
     }
-    const overview = await ProjectOverview.findOneAndUpdate(
-      {},
+    const newOverview = new ProjectOverview({
+      title,
+      description,
+      highlights: highlightsArray,
+      videoUrl
+    });
+    await newOverview.save();
+    res.status(201).json(newOverview);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Protected: update a specific overview layer
+router.put('/project-overview/:id', requireAuth, async (req, res) => {
+  try {
+    const { title, description, highlights, videoUrl } = req.body;
+    let highlightsArray = [];
+    if (highlights) {
+      highlightsArray = Array.isArray(highlights)
+        ? highlights
+        : highlights.split(',').map(h => h.trim()).filter(Boolean);
+    }
+    const updated = await ProjectOverview.findByIdAndUpdate(
+      req.params.id,
       { title, description, highlights: highlightsArray, videoUrl },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { new: true }
     );
-    res.json(overview);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Protected: delete a specific overview layer
+router.delete('/project-overview/:id', requireAuth, async (req, res) => {
+  try {
+    await ProjectOverview.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Overview layer deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

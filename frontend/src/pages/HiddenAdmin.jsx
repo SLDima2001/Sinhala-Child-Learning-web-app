@@ -13,6 +13,7 @@ const HiddenAdmin = () => {
   const [documents, setDocuments] = useState([]);
   const [milestones, setMilestones] = useState([]);
   const [team, setTeam] = useState([]);
+  const [overviews, setOverviews] = useState([]);
 
   // Document Upload State
   const [title, setTitle] = useState('');
@@ -42,31 +43,23 @@ const HiddenAdmin = () => {
 
   const fetchAllData = async () => {
     try {
-      const [docRes, milRes, teamRes] = await Promise.all([
+      const [docRes, milRes, teamRes, ovRes] = await Promise.all([
         api.get('/documents'),
         api.get('/milestones'),
-        api.get('/team')
+        api.get('/team'),
+        api.get('/project-overview')
       ]);
       setDocuments(docRes.data);
       setMilestones(milRes.data);
       setTeam(teamRes.data);
+      setOverviews(ovRes.data);
     } catch (err) {
       console.error(err);
     }
   };
 
   const fetchOverview = async () => {
-    try {
-      const res = await api.get('/project-overview');
-      if (res.data) {
-        setOvTitle(res.data.title || '');
-        setOvDesc(res.data.description || '');
-        setOvHighlights((res.data.highlights || []).join(', '));
-        setOvVideo(res.data.videoUrl || '');
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    // Overviews are now fetched in fetchAllData
   };
 
   useEffect(() => {
@@ -159,15 +152,17 @@ const HiddenAdmin = () => {
   const handleOverviewSave = async (e) => {
     e.preventDefault();
     try {
-      await api.put('/project-overview', {
+      await api.post('/project-overview', {
         title: ovTitle,
         description: ovDesc,
         highlights: ovHighlights,
         videoUrl: ovVideo
       }, config());
-      setMessage('Project overview saved successfully!');
+      setMessage('New overview layer added successfully!');
+      setOvTitle(''); setOvDesc(''); setOvHighlights(''); setOvVideo('');
+      fetchAllData();
     } catch (err) {
-      setMessage('Failed to save project overview');
+      setMessage('Failed to add project overview');
     }
   };
 
@@ -212,65 +207,90 @@ const HiddenAdmin = () => {
           <button className={`tab-btn ${activeTab === 'team' ? 'active' : ''}`} onClick={() => setActiveTab('team')}>👥 Team Members</button>
         </div>
 
-        {/* PROJECT OVERVIEW TAB — full-width single panel */}
+        {/* PROJECT OVERVIEW TAB — two-column layout */}
         {activeTab === 'overview' && (
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ marginBottom: '0.5rem' }}>Edit Project Overview</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-              This content is displayed on the Home page for all visitors.
-            </p>
-            <form onSubmit={handleOverviewSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Project Title</label>
-                <input
-                  type="text"
-                  placeholder="e.g. EduSinhala — AI-Powered Sinhala Learning"
-                  value={ovTitle}
-                  onChange={e => setOvTitle(e.target.value)}
-                  required
-                  className="admin-input"
-                />
+          <div className="grid grid-cols-2">
+            {/* LEFT SIDE: CREATION FORM */}
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+              <h3 style={{ marginBottom: '0.5rem' }}>Add Overview Layer</h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                Create a new section for the Home page.
+              </p>
+              <form onSubmit={handleOverviewSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Layer Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. EduSinhala — AI-Powered Sinhala Learning"
+                    value={ovTitle}
+                    onChange={e => setOvTitle(e.target.value)}
+                    required
+                    className="admin-input"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Layer Description</label>
+                  <textarea
+                    placeholder="Describe this section in 2–4 sentences..."
+                    value={ovDesc}
+                    onChange={e => setOvDesc(e.target.value)}
+                    required
+                    className="admin-input"
+                    rows={5}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>
+                    Key Highlights <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(comma-separated)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. AI-powered, Gamified, Child-friendly"
+                    value={ovHighlights}
+                    onChange={e => setOvHighlights(e.target.value)}
+                    className="admin-input"
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>
+                    Video URL <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(YouTube embed URL)</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                    value={ovVideo}
+                    onChange={e => setOvVideo(e.target.value)}
+                    className="admin-input"
+                  />
+                </div>
+                <button className="btn-primary" type="submit" style={{ alignSelf: 'flex-start' }}>
+                  ➕ Add Layer
+                </button>
+              </form>
+            </div>
+
+            {/* RIGHT SIDE: LIST VIEW */}
+            <div className="glass-panel" style={{ padding: '2rem', maxHeight: '600px', overflowY: 'auto' }}>
+              <h3 style={{ marginBottom: '1.5rem' }}>Managed Layers</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {overviews.length === 0 ? (
+                  <p style={{ color: 'var(--text-secondary)' }}>No overview layers yet.</p>
+                ) : (
+                  overviews.map((ov, idx) => (
+                    <div key={ov._id || idx} className="admin-list-item">
+                      <div style={{ flex: 1, marginRight: '1rem' }}>
+                        <h4 style={{ margin: 0, fontSize: '1rem' }}>{ov.title}</h4>
+                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '300px' }}>
+                          {ov.description}
+                        </p>
+                      </div>
+                      <button onClick={() => handleDelete('project-overview', ov._id)} className="btn-delete">Delete</button>
+                    </div>
+                  ))
+                )}
               </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>Project Description</label>
-                <textarea
-                  placeholder="Describe your research project in 2–4 sentences..."
-                  value={ovDesc}
-                  onChange={e => setOvDesc(e.target.value)}
-                  required
-                  className="admin-input"
-                  rows={5}
-                  style={{ resize: 'vertical' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>
-                  Key Highlights <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(comma-separated bullet points)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. AI-powered, Gamified, Child-friendly, Sinhala NLP"
-                  value={ovHighlights}
-                  onChange={e => setOvHighlights(e.target.value)}
-                  className="admin-input"
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', display: 'block' }}>
-                  Demo / Intro Video URL <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>(YouTube embed URL, optional)</span>
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/embed/VIDEO_ID"
-                  value={ovVideo}
-                  onChange={e => setOvVideo(e.target.value)}
-                  className="admin-input"
-                />
-              </div>
-              <button className="btn-primary" type="submit" style={{ alignSelf: 'flex-start' }}>
-                💾 Save Project Overview
-              </button>
-            </form>
+            </div>
           </div>
         )}
 
